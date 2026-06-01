@@ -7,6 +7,10 @@ interface NoteListItemProps {
   note: Note;
   onPress: () => void;
   onDelete: () => void;
+  onTogglePin: () => void;
+  /** Begin a drag (from DraggableFlatList's `drag`). */
+  onDrag: () => void;
+  isActive: boolean;
 }
 
 function formatDate(value: string): string {
@@ -17,15 +21,36 @@ function formatDate(value: string): string {
   });
 }
 
-export function NoteListItem({ note, onPress, onDelete }: NoteListItemProps) {
+export function NoteListItem({
+  note,
+  onPress,
+  onDelete,
+  onTogglePin,
+  onDrag,
+  isActive,
+}: NoteListItemProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      onLongPress={onDrag}
+      delayLongPress={200}
+      style={({ pressed }) => [
+        styles.card,
+        note.isPinned && styles.pinnedCard,
+        (pressed || isActive) && styles.pressed,
+      ]}
     >
-      <Text style={styles.title} numberOfLines={1}>
-        {note.title}
-      </Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title} numberOfLines={1}>
+          {note.isPinned ? "📌 " : ""}
+          {note.title}
+        </Text>
+        <Pressable hitSlop={8} onPress={onTogglePin}>
+          <Text style={[styles.pinAction, note.isPinned && styles.pinActive]}>
+            {note.isPinned ? "Unpin" : "Pin"}
+          </Text>
+        </Pressable>
+      </View>
       {note.content ? (
         <Text style={styles.content} numberOfLines={2}>
           {note.content}
@@ -50,13 +75,31 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: 6,
   },
+  pinnedCard: {
+    borderColor: colors.primary,
+  },
   pressed: {
     opacity: 0.7,
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
   title: {
+    flex: 1,
     fontSize: 16,
     fontWeight: "600",
     color: colors.text,
+  },
+  pinAction: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: colors.muted,
+  },
+  pinActive: {
+    color: colors.primary,
   },
   content: {
     fontSize: 14,

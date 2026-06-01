@@ -6,7 +6,9 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.example.notesapp"
@@ -14,11 +16,12 @@
     "android": {
       "package": "com.example.notesapp"
     },
-    "web": {
-      "favicon": null
-    },
     "extra": {
       "apiUrl": "http://localhost:3000"
-    }
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font"
+    ]
   }
 }

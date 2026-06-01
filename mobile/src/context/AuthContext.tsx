@@ -15,11 +15,13 @@ interface AuthContextValue {
   initializing: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (
+    name: string,
     email: string,
     password: string,
     confirmPassword: string
   ) => Promise<void>;
   signOut: () => Promise<void>;
+  setUser: (user: AuthUser) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -29,13 +31,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(true);
 
-  // On launch, restore any saved token so the user stays logged in.
+  // On launch, restore any saved token so the user stays logged in, and
+  // fetch the profile to populate the user's name/email.
   useEffect(() => {
     (async () => {
       try {
         const saved = await getToken();
         if (saved) {
           setToken(saved);
+          try {
+            const profile = await api.getProfile();
+            setUser(profile);
+          } catch {
+            // Token is invalid/expired — clear it and stay logged out.
+            await deleteToken();
+            setToken(null);
+          }
         }
       } finally {
         setInitializing(false);
@@ -51,8 +62,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = useCallback(
-    async (email: string, password: string, confirmPassword: string) => {
-      await api.register(email, password, confirmPassword);
+    async (
+      name: string,
+      email: string,
+      password: string,
+      confirmPassword: string
+    ) => {
+      await api.register(name, email, password, confirmPassword);
       // Registration succeeded — log straight in.
       const { token: newToken, user: newUser } = await api.login(
         email,
@@ -73,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, initializing, signIn, signUp, signOut }}
+      value={{ user, token, initializing, signIn, signUp, signOut, setUser }}
     >
       {children}
     </AuthContext.Provider>

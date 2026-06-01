@@ -19,6 +19,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, "Register">;
 
 export function RegisterScreen({ navigation }: Props) {
   const { signUp } = useAuth();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,6 +29,11 @@ export function RegisterScreen({ navigation }: Props) {
   async function handleRegister() {
     setError(null);
 
+    const trimmedName = name.trim();
+    if (trimmedName.length < 2 || trimmedName.length > 50) {
+      setError("Name must be between 2 and 50 characters");
+      return;
+    }
     if (!email.trim()) {
       setError("Email is required");
       return;
@@ -43,7 +49,7 @@ export function RegisterScreen({ navigation }: Props) {
 
     setLoading(true);
     try {
-      await signUp(email.trim(), password, confirmPassword);
+      await signUp(trimmedName, email.trim(), password, confirmPassword);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Registration failed");
     } finally {
@@ -63,6 +69,15 @@ export function RegisterScreen({ navigation }: Props) {
         </Text>
 
         <View style={styles.form}>
+          <TextField
+            label="Name"
+            value={name}
+            onChangeText={setName}
+            placeholder="John Doe"
+            autoCapitalize="words"
+            autoCorrect={false}
+            editable={!loading}
+          />
           <TextField
             label="Email"
             value={email}

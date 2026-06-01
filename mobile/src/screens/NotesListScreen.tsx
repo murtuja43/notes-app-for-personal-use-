@@ -2,13 +2,16 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import DraggableFlatList, {
+  ScaleDecorator,
+  type RenderItemParams,
+} from "react-native-draggable-flatlist";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { NoteListItem } from "@/components/NoteListItem";
@@ -20,8 +23,16 @@ import type { Note } from "@/types";
 
 type Props = NativeStackScreenProps<AppStackParamList, "NotesList">;
 
+/** Pinned first, then by the user's custom sortOrder. */
+function sortNotes(notes: Note[]): Note[] {
+  return [...notes].sort(
+    (a, b) =>
+      Number(b.isPinned) - Number(a.isPinned) || a.sortOrder - b.sortOrder
+  );
+}
+
 export function NotesListScreen({ navigation }: Props) {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -33,7 +44,7 @@ export function NotesListScreen({ navigation }: Props) {
     setError(null);
     try {
       const data = await api.getNotes();
-      setNotes(data);
+      setNotes(sortNotes(data));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load notes");
     } finally {
@@ -49,7 +60,7 @@ export function NotesListScreen({ navigation }: Props) {
     }, [load])
   );
 
-  // Header buttons: logout + create.
+  // Header buttons: profile + create.
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -58,20 +69,13 @@ export function NotesListScreen({ navigation }: Props) {
         </Pressable>
       ),
       headerLeft: () => (
-        <Pressable onPress={confirmSignOut}>
-          <Text style={styles.headerButtonMuted}>Logout</Text>
+        <Pressable onPress={() => navigation.navigate("Profile")}>
+          <Text style={styles.headerButtonMuted}>Profile</Text>
         </Pressable>
       ),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigation]);
-
-  function confirmSignOut() {
-    Alert.alert("Logout", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Logout", style: "destructive", onPress: () => signOut() },
-    ]);
-  }
 
   function confirmDelete(note: Note) {
     Alert.alert("Delete note?", `"${note.title}" will be permanently deleted.`, [
@@ -94,6 +98,56 @@ export function NotesListScreen({ navigation }: Props) {
     ]);
   }
 
+  async function handleTogglePin(note: Note) {
+    // Optimistic update, then persist.
+    const updated = { ...note, isPinned: !note.isPinned };
+    setNotes((prev) =>
+      sortNotes(prev.map((n) => (n.id === note.id ? updated : n)))
+    );
+    try {
+      const saved = await api.setPinned(note, !note.isPinned);
+      setNotes((prev) =>
+        sortNotes(prev.map((n) => (n.id === saved.id ? saved : n)))
+      );
+    } catch (e) {
+      setNotes((prev) =>
+        sortNotes(prev.map((n) => (n.id === note.id ? note : n)))
+      );
+      Alert.alert("Error", e instanceof Error ? e.message : "Failed to pin");
+    }
+  }
+
+  async function handleDragEnd({ data }: { data: Note[] }) {
+    const previous = notes;
+    setNotes(data); // keep the dragged order immediately (smooth)
+    try {
+      const saved = await api.reorderNotes(data.map((n) => n.id));
+      setNotes(sortNotes(saved));
+    } catch (e) {
+      setNotes(previous); // roll back
+      Alert.alert("Error", e instanceof Error ? e.message : "Failed to reorder");
+    }
+  }
+
+  const renderItem = useCallback(
+    ({ item, drag, isActive }: RenderItemParams<Note>) => (
+      <ScaleDecorator>
+        <View style={styles.itemWrapper}>
+          <NoteListItem
+            note={item}
+            onPress={() => navigation.navigate("EditNote", { note: item })}
+            onDelete={() => confirmDelete(item)}
+            onTogglePin={() => handleTogglePin(item)}
+            onDrag={drag}
+            isActive={isActive}
+          />
+        </View>
+      </ScaleDecorator>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [navigation, notes]
+  );
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -104,8 +158,8 @@ export function NotesListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      {user?.email ? (
-        <Text style={styles.email}>Signed in as {user.email}</Text>
+      {user?.name ? (
+        <Text style={styles.email}>Signed in as {user.name}</Text>
       ) : null}
 
       {error ? (
@@ -114,8 +168,9 @@ export function NotesListScreen({ navigation }: Props) {
         </View>
       ) : null}
 
-      <FlatList
+      <DraggableFlatList
         data={notes}
+        onDragEnd={handleDragEnd}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={
@@ -124,14 +179,14 @@ export function NotesListScreen({ navigation }: Props) {
             onRefresh={() => load("refresh")}
           />
         }
-        ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
-        renderItem={({ item }) => (
-          <NoteListItem
-            note={item}
-            onPress={() => navigation.navigate("EditNote", { note: item })}
-            onDelete={() => confirmDelete(item)}
-          />
-        )}
+        renderItem={renderItem}
+        ListHeaderComponent={
+          notes.length > 0 ? (
+            <Text style={styles.hint}>
+              Long-press a note to drag and reorder.
+            </Text>
+          ) : null
+        }
         ListEmptyComponent={
           !error ? (
             <View style={styles.empty}>
@@ -161,9 +216,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
   },
+  hint: {
+    fontSize: 12,
+    color: colors.muted,
+    marginBottom: spacing.sm,
+  },
   listContent: {
     padding: spacing.md,
     flexGrow: 1,
+  },
+  itemWrapper: {
+    marginBottom: spacing.sm,
   },
   headerButton: {
     fontSize: 16,

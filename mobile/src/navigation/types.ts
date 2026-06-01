@@ -9,4 +9,5 @@ export type AppStackParamList = {
   NotesList: undefined;
   CreateNote: undefined;
   EditNote: { note: Note };
+  Profile: undefined;
 };

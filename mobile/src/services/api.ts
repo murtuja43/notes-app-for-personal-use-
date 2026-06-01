@@ -73,14 +73,41 @@ export function login(email: string, password: string) {
 }
 
 export function register(
+  name: string,
   email: string,
   password: string,
   confirmPassword: string
 ) {
   return request<{ user: AuthUser }>("/api/auth/register", {
     method: "POST",
-    body: { email, password, confirmPassword },
+    body: { name, email, password, confirmPassword },
     auth: false,
+  });
+}
+
+// ---- Profile -------------------------------------------------------------
+
+export async function getProfile(): Promise<AuthUser> {
+  const data = await request<{ user: AuthUser }>("/api/profile");
+  return data.user;
+}
+
+export async function updateProfile(name: string): Promise<AuthUser> {
+  const data = await request<{ user: AuthUser }>("/api/profile", {
+    method: "PUT",
+    body: { name },
+  });
+  return data.user;
+}
+
+export function changePassword(input: {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}) {
+  return request<{ success: boolean }>("/api/profile/change-password", {
+    method: "POST",
+    body: input,
   });
 }
 
@@ -109,4 +136,22 @@ export async function updateNote(id: string, input: NoteInput): Promise<Note> {
 
 export async function deleteNote(id: string): Promise<void> {
   await request(`/api/notes/${id}`, { method: "DELETE" });
+}
+
+/** Pin or unpin a note (keeps title/content unchanged). */
+export async function setPinned(note: Note, isPinned: boolean): Promise<Note> {
+  const data = await request<{ note: Note }>(`/api/notes/${note.id}`, {
+    method: "PUT",
+    body: { title: note.title, content: note.content, isPinned },
+  });
+  return data.note;
+}
+
+/** Persist a new manual order; returns the full re-sorted list. */
+export async function reorderNotes(orderedIds: string[]): Promise<Note[]> {
+  const data = await request<{ notes: Note[] }>("/api/notes/reorder", {
+    method: "PUT",
+    body: { orderedIds },
+  });
+  return data.notes;
 }

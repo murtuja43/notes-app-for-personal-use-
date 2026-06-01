@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NotesListScreen } from "@/screens/NotesListScreen";
 import { CreateNoteScreen } from "@/screens/CreateNoteScreen";
 import { EditNoteScreen } from "@/screens/EditNoteScreen";
+import { ProfileScreen } from "@/screens/ProfileScreen";
 import type { AppStackParamList } from "./types";
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
@@ -24,6 +25,11 @@ export function AppNavigator() {
         name="EditNote"
         component={EditNoteScreen}
         options={{ title: "Edit Note" }}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ title: "Profile" }}
       />
     </Stack.Navigator>
   );
