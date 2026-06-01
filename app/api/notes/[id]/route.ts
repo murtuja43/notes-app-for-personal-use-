@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/session";
-import { noteSchema } from "@/lib/validations";
+import { updateNoteSchema } from "@/lib/validations";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -23,7 +23,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const parsed = noteSchema.safeParse(body);
+  const parsed = updateNoteSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? "Invalid input" },
@@ -42,6 +42,10 @@ export async function PUT(request: Request, { params }: RouteContext) {
     data: {
       title: parsed.data.title,
       content: parsed.data.content ?? "",
+      // Only change pin status when the client explicitly provides it.
+      ...(parsed.data.isPinned !== undefined
+        ? { isPinned: parsed.data.isPinned }
+        : {}),
     },
   });
 

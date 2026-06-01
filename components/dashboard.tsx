@@ -1,22 +1,68 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { LogOut, Plus, NotebookPen, Loader2, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { NoteCard } from "@/components/note-card";
+import { LogOut, Plus, NotebookPen, Loader2, FileText, User } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { SortableNoteCard } from "@/components/sortable-note-card";
 import { NoteEditorDialog } from "@/components/note-editor-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { useNotes } from "@/hooks/use-notes";
 import type { Note } from "@/types";
 
-export function Dashboard({ userEmail }: { userEmail: string }) {
-  const { notes, loading, error, createNote, updateNote, deleteNote } =
-    useNotes();
+export function Dashboard({ userName }: { userName: string }) {
+  const {
+    notes,
+    loading,
+    error,
+    createNote,
+    updateNote,
+    deleteNote,
+    togglePin,
+    reorder,
+  } = useNotes();
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
+
+  // Require a small drag distance so clicking the buttons isn't treated as a drag.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = notes.findIndex((n) => n.id === active.id);
+    const newIndex = notes.findIndex((n) => n.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const orderedIds = arrayMove(notes, oldIndex, newIndex).map((n) => n.id);
+    reorder(orderedIds).catch(() => {
+      /* hook rolls back on failure */
+    });
+  }
 
   function openCreate() {
     setEditingNote(null);
@@ -39,9 +85,16 @@ export function Dashboard({ userEmail }: { userEmail: string }) {
             <span className="text-lg font-semibold">Notes</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              {userEmail}
+            <span className="hidden text-sm font-medium sm:inline">
+              {userName}
             </span>
+            <Link
+              href="/profile"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <User className="h-4 w-4" />
+              <span className="hidden sm:inline">Profile</span>
+            </Link>
             <Button
               variant="outline"
               size="sm"
@@ -98,18 +151,30 @@ export function Dashboard({ userEmail }: { userEmail: string }) {
           </div>
         )}
 
-        {/* Notes grid */}
+        {/* Notes grid (drag the grip handle to reorder) */}
         {!loading && !error && notes.length > 0 && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {notes.map((note) => (
-              <NoteCard
-                key={note.id}
-                note={note}
-                onEdit={openEdit}
-                onDelete={setNoteToDelete}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={notes.map((n) => n.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {notes.map((note) => (
+                  <SortableNoteCard
+                    key={note.id}
+                    note={note}
+                    onEdit={openEdit}
+                    onDelete={setNoteToDelete}
+                    onTogglePin={togglePin}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </main>
 

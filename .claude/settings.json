@@ -18,7 +18,16 @@
       "Bash(break)",
       "Bash(export DATABASE_URL=\"postgresql://postgres:password@localhost:5433/notes\")",
       "Bash(DATABASE_URL=\"postgresql://postgres:password@localhost:5433/notes\" NEXTAUTH_URL=\"http://localhost:3000\" PORT=3000 npm run start)",
-      "Bash(curl -s -o /dev/null http://localhost:3000)"
+      "Bash(curl -s -o /dev/null http://localhost:3000)",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0\\)\\).dependencies; console.log\\(Object.keys\\(d\\).join\\('\\\\n'\\)\\)\")",
+      "Bash([ -d \"node_modules/$p\" ])",
+      "Bash(npm ls *)",
+      "Bash(curl -s -o /dev/null -w \"status=%{http_code}\\\\n\" http://localhost:8082)",
+      "Bash(npx expo-doctor *)",
+      "Bash(ls -la metro.config.js)",
+      "Bash(cat metro.config.js)",
+      "Bash(rm -rf .next)",
+      "Bash(NEXTAUTH_SECRET=\"smoketest-secret\" DATABASE_URL=\"postgresql://postgres:password@localhost:5433/notes\" npm run build)"
     ]
   }
 }

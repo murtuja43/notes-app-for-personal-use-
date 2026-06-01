@@ -40,20 +40,27 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Returned object is encoded into the JWT.
-        return { id: user.id, email: user.email };
+        return { id: user.id, email: user.email, name: user.name };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
+        token.name = user.name;
+      }
+      // Allow the client to push a fresh name into the token after a profile
+      // update via `useSession().update({ name })`.
+      if (trigger === "update" && typeof session?.name === "string") {
+        token.name = session.name;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.id) {
-        session.user.id = token.id as string;
+      if (session.user) {
+        if (token.id) session.user.id = token.id as string;
+        if (typeof token.name === "string") session.user.name = token.name;
       }
       return session;
     },

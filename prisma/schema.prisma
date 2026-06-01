@@ -12,6 +12,7 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
+  name      String
   email     String   @unique
   password  String
   notes     Note[]
@@ -23,6 +24,8 @@ model Note {
   id        String   @id @default(cuid())
   title     String
   content   String   @default("")
+  isPinned  Boolean  @default(false)
+  sortOrder Int      @default(0)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

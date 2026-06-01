@@ -12,7 +12,8 @@ export async function GET(request: Request) {
 
   const notes = await prisma.note.findMany({
     where: { userId },
-    orderBy: { updatedAt: "desc" },
+    // Pinned notes first, then by the user's custom manual order.
+    orderBy: [{ isPinned: "desc" }, { sortOrder: "asc" }],
   });
 
   return NextResponse.json({ notes });
@@ -40,10 +41,18 @@ export async function POST(request: Request) {
     );
   }
 
+  // New notes go to the top: give them a sortOrder lower than any existing note.
+  const min = await prisma.note.aggregate({
+    where: { userId },
+    _min: { sortOrder: true },
+  });
+  const nextSortOrder = (min._min.sortOrder ?? 0) - 1;
+
   const note = await prisma.note.create({
     data: {
       title: parsed.data.title,
       content: parsed.data.content ?? "",
+      sortOrder: nextSortOrder,
       userId,
     },
   });

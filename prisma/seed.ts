@@ -17,6 +17,7 @@ async function main() {
     where: { email },
     update: {},
     create: {
+      name: "Demo User",
       email,
       password,
       notes: {
@@ -25,10 +26,14 @@ async function main() {
             title: "Welcome to Notes App",
             content:
               "This is your first note. Edit me, or create a new note from the dashboard.",
+            isPinned: true,
+            sortOrder: 0,
           },
           {
             title: "Shopping list",
             content: "Milk\nEggs\nCoffee\nBread",
+            isPinned: false,
+            sortOrder: 1,
           },
         ],
       },
