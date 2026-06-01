@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npm run *)",
+      "Bash(NEXTAUTH_SECRET=\"build-time-placeholder\" DATABASE_URL=\"postgresql://user:pass@localhost:5432/db\" npm run build)",
+      "Bash(mkdir -p prisma/migrations/0_init)",
+      "Bash(npx prisma *)",
+      "Bash(npx expo *)",
+      "Bash(NEXTAUTH_SECRET=\"x\" DATABASE_URL=\"postgresql://u:p@localhost:5432/db\" npm run build)"
+    ]
+  }
+}

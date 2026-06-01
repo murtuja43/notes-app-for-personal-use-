@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Notes App",
+    "slug": "notes-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.notesapp"
+    },
+    "android": {
+      "package": "com.example.notesapp"
+    },
+    "web": {
+      "favicon": null
+    },
+    "extra": {
+      "apiUrl": "http://localhost:3000"
+    }
+  }
+}
