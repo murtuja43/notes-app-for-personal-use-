@@ -7,7 +7,18 @@
       "Bash(mkdir -p prisma/migrations/0_init)",
       "Bash(npx prisma *)",
       "Bash(npx expo *)",
-      "Bash(NEXTAUTH_SECRET=\"x\" DATABASE_URL=\"postgresql://u:p@localhost:5432/db\" npm run build)"
+      "Bash(NEXTAUTH_SECRET=\"x\" DATABASE_URL=\"postgresql://u:p@localhost:5432/db\" npm run build)",
+      "Bash(command -v docker)",
+      "Bash(docker info *)",
+      "Bash(command -v postgres pg_ctl initdb psql)",
+      "Read(//opt/homebrew/**)",
+      "Bash(command -v openssl)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(node start.js)",
+      "Bash(break)",
+      "Bash(export DATABASE_URL=\"postgresql://postgres:password@localhost:5433/notes\")",
+      "Bash(DATABASE_URL=\"postgresql://postgres:password@localhost:5433/notes\" NEXTAUTH_URL=\"http://localhost:3000\" PORT=3000 npm run start)",
+      "Bash(curl -s -o /dev/null http://localhost:3000)"
     ]
   }
 }
