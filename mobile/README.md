@@ -1,6 +1,6 @@
-# Notes App — Mobile (Expo + React Native)
+# NoteAll — Mobile (Expo + React Native)
 
-The Android/iOS client for the Notes App. It talks to the **same backend API**
+The Android/iOS client for NoteAll. It talks to the **same backend API**
 as the web app (the Next.js server in the parent folder).
 
 ## Tech stack

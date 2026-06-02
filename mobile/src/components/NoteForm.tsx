@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/Button";
 import { colors, radius, spacing } from "@/theme";
 import type { NoteInput } from "@/types";
@@ -48,56 +49,58 @@ export function NoteForm({
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.field}>
-          <Text style={styles.label}>Title</Text>
-          <TextInput
-            style={styles.titleInput}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Note title"
-            placeholderTextColor={colors.muted}
-            editable={!saving}
-          />
-        </View>
+    <SafeAreaView style={styles.flex} edges={["bottom"]}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.field}>
+            <Text style={styles.label}>Title</Text>
+            <TextInput
+              style={styles.titleInput}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Note title"
+              placeholderTextColor={colors.muted}
+              editable={!saving}
+            />
+          </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Content</Text>
-          <TextInput
-            style={styles.contentInput}
-            value={content}
-            onChangeText={setContent}
-            placeholder="Write something..."
-            placeholderTextColor={colors.muted}
-            multiline
-            textAlignVertical="top"
-            editable={!saving}
-          />
-        </View>
+          <View style={styles.field}>
+            <Text style={styles.label}>Content</Text>
+            <TextInput
+              style={styles.contentInput}
+              value={content}
+              onChangeText={setContent}
+              placeholder="Write something..."
+              placeholderTextColor={colors.muted}
+              multiline
+              textAlignVertical="top"
+              editable={!saving}
+            />
+          </View>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <View style={styles.actions}>
-          <Button
-            title="Cancel"
-            variant="outline"
-            onPress={onCancel}
-            disabled={saving}
-            style={styles.actionButton}
-          />
-          <Button
-            title={submitLabel}
-            onPress={handleSubmit}
-            loading={saving}
-            style={styles.actionButton}
-          />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <View style={styles.actions}>
+            <Button
+              title="Cancel"
+              variant="outline"
+              onPress={onCancel}
+              disabled={saving}
+              style={styles.actionButton}
+            />
+            <Button
+              title={submitLabel}
+              onPress={handleSubmit}
+              loading={saving}
+              style={styles.actionButton}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

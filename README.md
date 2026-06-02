@@ -1,8 +1,8 @@
-# Notes App — Web + Android
+# NoteAll — Web + Mobile
 
 A simple, production-ready cross-platform notes app. Create an account with
 email + password, then create, edit, delete, and view your notes from the
-**web** or an **Android** app — all backed by the same API and database, so
+**web**, **Android**, or **iOS** app — all backed by the same API and database, so
 your notes follow you across devices.
 
 ## Features
@@ -10,7 +10,7 @@ your notes follow you across devices.
 - 🔐 Email + password auth (register / login), passwords hashed with **bcrypt**
 - 📝 Full notes CRUD (create, read, update, delete)
 - 🔒 Per-user data isolation — you can only ever see your own notes
-- 🌐 Web app (Next.js) **and** 📱 Android app (Expo) sharing one backend
+- 🌐 Web app (Next.js) **and** 📱 mobile app (Expo) sharing one backend
 - ☁️ Deployable to Vercel + Neon PostgreSQL
 
 ## Tech stack

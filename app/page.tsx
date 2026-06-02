@@ -19,11 +19,11 @@ export default async function LandingPage() {
           <NotebookPen className="h-7 w-7" />
         </div>
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-          Your notes, everywhere.
+          NoteAll
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">
           A simple, fast notes app. Sign in once and access your notes from the
-          web or your Android phone.
+          web, Android, or iPhone.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link href="/register" className={buttonVariants({ size: "lg" })}>

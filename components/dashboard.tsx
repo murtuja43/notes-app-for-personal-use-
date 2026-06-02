@@ -82,7 +82,7 @@ export function Dashboard({ userName }: { userName: string }) {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <NotebookPen className="h-5 w-5" />
             </div>
-            <span className="text-lg font-semibold">Notes</span>
+            <span className="text-lg font-semibold">NoteAll</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="hidden text-sm font-medium sm:inline">

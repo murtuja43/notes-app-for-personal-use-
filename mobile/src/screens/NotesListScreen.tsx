@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import DraggableFlatList, {
   ScaleDecorator,
   type RenderItemParams,
@@ -60,22 +61,39 @@ export function NotesListScreen({ navigation }: Props) {
     }, [load])
   );
 
-  // Header buttons: profile + create.
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Pressable onPress={() => navigation.navigate("CreateNote")}>
+  const header = (
+    <View style={styles.header}>
+      <Text style={styles.headerTitle} numberOfLines={1}>
+        NoteAll
+      </Text>
+      <View style={styles.headerActions}>
+        <Pressable
+          onPress={() => navigation.navigate("CreateNote")}
+          accessibilityRole="button"
+          accessibilityLabel="Create note"
+          hitSlop={8}
+          style={({ pressed }) => [
+            styles.headerAction,
+            pressed ? styles.headerActionPressed : null,
+          ]}
+        >
           <Text style={styles.headerButton}>+ New</Text>
         </Pressable>
-      ),
-      headerLeft: () => (
-        <Pressable onPress={() => navigation.navigate("Profile")}>
+        <Pressable
+          onPress={() => navigation.navigate("Profile")}
+          accessibilityRole="button"
+          accessibilityLabel="Open profile"
+          hitSlop={8}
+          style={({ pressed }) => [
+            styles.headerAction,
+            pressed ? styles.headerActionPressed : null,
+          ]}
+        >
           <Text style={styles.headerButtonMuted}>Profile</Text>
         </Pressable>
-      ),
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigation]);
+      </View>
+    </View>
+  );
 
   function confirmDelete(note: Note) {
     Alert.alert("Delete note?", `"${note.title}" will be permanently deleted.`, [
@@ -150,65 +168,103 @@ export function NotesListScreen({ navigation }: Props) {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+        {header}
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {user?.name ? (
-        <Text style={styles.email}>Signed in as {user.name}</Text>
-      ) : null}
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+      {header}
+      <View style={styles.container}>
+        {user?.name ? (
+          <Text style={styles.email}>Signed in as {user.name}</Text>
+        ) : null}
 
-      {error ? (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : null}
+        {error ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
 
-      <DraggableFlatList
-        data={notes}
-        onDragEnd={handleDragEnd}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => load("refresh")}
-          />
-        }
-        renderItem={renderItem}
-        ListHeaderComponent={
-          notes.length > 0 ? (
-            <Text style={styles.hint}>
-              Long-press a note to drag and reorder.
-            </Text>
-          ) : null
-        }
-        ListEmptyComponent={
-          !error ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>No notes yet</Text>
-              <Text style={styles.emptyText}>
-                Tap “+ New” to create your first note.
+        <DraggableFlatList
+          data={notes}
+          onDragEnd={handleDragEnd}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => load("refresh")}
+            />
+          }
+          renderItem={renderItem}
+          ListHeaderComponent={
+            notes.length > 0 ? (
+              <Text style={styles.hint}>
+                Long-press a note to drag and reorder.
               </Text>
-            </View>
-          ) : null
-        }
-      />
-    </View>
+            ) : null
+          }
+          ListEmptyComponent={
+            !error ? (
+              <View style={styles.empty}>
+                <Text style={styles.emptyTitle}>No notes yet</Text>
+                <Text style={styles.emptyText}>
+                  Tap “+ New” to create your first note.
+                </Text>
+              </View>
+            ) : null
+          }
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1, backgroundColor: colors.background },
   center: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.background,
+  },
+  header: {
+    minHeight: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.background,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  headerTitle: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginLeft: spacing.md,
+  },
+  headerAction: {
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.sm,
+  },
+  headerActionPressed: {
+    opacity: 0.65,
   },
   email: {
     fontSize: 13,
@@ -235,6 +291,7 @@ const styles = StyleSheet.create({
   },
   headerButtonMuted: {
     fontSize: 16,
+    fontWeight: "600",
     color: colors.muted,
   },
   empty: {

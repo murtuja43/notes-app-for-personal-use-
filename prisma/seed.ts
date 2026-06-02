@@ -23,7 +23,7 @@ async function main() {
       notes: {
         create: [
           {
-            title: "Welcome to Notes App",
+            title: "Welcome to NoteAll",
             content:
               "This is your first note. Edit me, or create a new note from the dashboard.",
             isPinned: true,

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Notes App",
-    "slug": "notes-app",
+    "name": "NoteAll",
+    "slug": "noteall",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -11,7 +11,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.example.notesapp"
+      "bundleIdentifier": "com.example.notesapp",
+      "infoPlist": {
+        "CFBundleDisplayName": "NoteAll"
+      }
     },
     "android": {
       "package": "com.example.notesapp"

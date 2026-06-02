@@ -1,6 +1,7 @@
 import React from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { AuthNavigator } from "./AuthNavigator";
 import { AppNavigator } from "./AppNavigator";
@@ -11,9 +12,9 @@ export function RootNavigator() {
 
   if (initializing) {
     return (
-      <View style={styles.center}>
+      <SafeAreaView style={styles.center} edges={["top", "bottom"]}>
         <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      </SafeAreaView>
     );
   }
 

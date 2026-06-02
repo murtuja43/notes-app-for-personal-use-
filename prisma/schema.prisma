@@ -1,4 +1,4 @@
-// Prisma schema for the Notes App
+// Prisma schema for NoteAll
 // Docs: https://pris.ly/d/prisma-schema
 
 generator client {

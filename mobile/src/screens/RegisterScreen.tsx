@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { TextField } from "@/components/TextField";
 import { Button } from "@/components/Button";
@@ -58,72 +59,74 @@ export function RegisterScreen({ navigation }: Props) {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Create an account</Text>
-        <Text style={styles.subtitle}>
-          Enter your email and a password to get started.
-        </Text>
-
-        <View style={styles.form}>
-          <TextField
-            label="Name"
-            value={name}
-            onChangeText={setName}
-            placeholder="John Doe"
-            autoCapitalize="words"
-            autoCorrect={false}
-            editable={!loading}
-          />
-          <TextField
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={!loading}
-          />
-          <TextField
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="At least 6 characters"
-            secureTextEntry
-            editable={!loading}
-          />
-          <TextField
-            label="Confirm password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="Re-enter your password"
-            secureTextEntry
-            editable={!loading}
-          />
-
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
-          <Button
-            title="Create account"
-            onPress={handleRegister}
-            loading={loading}
-          />
-        </View>
-
-        <Pressable
-          onPress={() => navigation.navigate("Login")}
-          disabled={loading}
-        >
-          <Text style={styles.footer}>
-            Already have an account? <Text style={styles.link}>Sign in</Text>
+    <SafeAreaView style={styles.flex} edges={["top", "bottom"]}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>Create an account</Text>
+          <Text style={styles.subtitle}>
+            Enter your email and a password to get started.
           </Text>
-        </Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          <View style={styles.form}>
+            <TextField
+              label="Name"
+              value={name}
+              onChangeText={setName}
+              placeholder="John Doe"
+              autoCapitalize="words"
+              autoCorrect={false}
+              editable={!loading}
+            />
+            <TextField
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@example.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!loading}
+            />
+            <TextField
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="At least 6 characters"
+              secureTextEntry
+              editable={!loading}
+            />
+            <TextField
+              label="Confirm password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Re-enter your password"
+              secureTextEntry
+              editable={!loading}
+            />
+
+            {error ? <Text style={styles.error}>{error}</Text> : null}
+
+            <Button
+              title="Create account"
+              onPress={handleRegister}
+              loading={loading}
+            />
+          </View>
+
+          <Pressable
+            onPress={() => navigation.navigate("Login")}
+            disabled={loading}
+          >
+            <Text style={styles.footer}>
+              Already have an account? <Text style={styles.link}>Sign in</Text>
+            </Text>
+          </Pressable>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
