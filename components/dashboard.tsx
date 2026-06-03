@@ -1,9 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { LogOut, Plus, NotebookPen, Loader2, FileText, User } from "lucide-react";
+import {
+  LogOut,
+  Plus,
+  NotebookPen,
+  Loader2,
+  FileText,
+  User,
+  Search,
+  X,
+} from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -20,7 +29,9 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { SortableNoteCard } from "@/components/sortable-note-card";
+import { NoteCard } from "@/components/note-card";
 import { NoteEditorDialog } from "@/components/note-editor-dialog";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { useNotes } from "@/hooks/use-notes";
@@ -41,6 +52,20 @@ export function Dashboard({ userName }: { userName: string }) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
+  const [query, setQuery] = useState("");
+
+  // Case-insensitive search over title + content. `notes` is already sorted
+  // (pinned first, then manual order), so filtering preserves that order.
+  const trimmedQuery = query.trim().toLowerCase();
+  const isSearching = trimmedQuery.length > 0;
+  const visibleNotes = useMemo(() => {
+    if (!isSearching) return notes;
+    return notes.filter(
+      (n) =>
+        n.title.toLowerCase().includes(trimmedQuery) ||
+        n.content.toLowerCase().includes(trimmedQuery)
+    );
+  }, [notes, isSearching, trimmedQuery]);
 
   // Require a small drag distance so clicking the buttons isn't treated as a drag.
   const sensors = useSensors(
@@ -112,7 +137,11 @@ export function Dashboard({ userName }: { userName: string }) {
           <div>
             <h1 className="text-2xl font-bold">Your notes</h1>
             <p className="text-sm text-muted-foreground">
-              {notes.length} {notes.length === 1 ? "note" : "notes"}
+              {isSearching
+                ? `${visibleNotes.length} of ${notes.length} ${
+                    notes.length === 1 ? "note" : "notes"
+                  }`
+                : `${notes.length} ${notes.length === 1 ? "note" : "notes"}`}
             </p>
           </div>
           <Button onClick={openCreate}>
@@ -120,6 +149,31 @@ export function Dashboard({ userName }: { userName: string }) {
             <span className="hidden sm:inline">Create note</span>
           </Button>
         </div>
+
+        {/* Search bar */}
+        {!loading && !error && notes.length > 0 && (
+          <div className="relative mb-6">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search notes by title or content..."
+              aria-label="Search notes"
+              className="pl-9 pr-9"
+            />
+            {isSearching && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Loading state */}
         {loading && (
@@ -151,30 +205,57 @@ export function Dashboard({ userName }: { userName: string }) {
           </div>
         )}
 
-        {/* Notes grid (drag the grip handle to reorder) */}
-        {!loading && !error && notes.length > 0 && (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={notes.map((n) => n.id)}
-              strategy={rectSortingStrategy}
+        {/* No search results */}
+        {!loading && !error && notes.length > 0 && visibleNotes.length === 0 && (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-20 text-center">
+            <Search className="mb-3 h-10 w-10 text-muted-foreground" />
+            <h2 className="text-lg font-medium">No matching notes</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              No notes match &ldquo;{query.trim()}&rdquo;.
+            </p>
+          </div>
+        )}
+
+        {/* Notes grid. Reordering (drag) is enabled only when not searching, so
+            dragging never persists a partial order over the full note list. */}
+        {!loading && !error && visibleNotes.length > 0 && (
+          isSearching ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {visibleNotes.map((note) => (
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  onEdit={openEdit}
+                  onDelete={setNoteToDelete}
+                  onTogglePin={togglePin}
+                  showDragHandle={false}
+                />
+              ))}
+            </div>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {notes.map((note) => (
-                  <SortableNoteCard
-                    key={note.id}
-                    note={note}
-                    onEdit={openEdit}
-                    onDelete={setNoteToDelete}
-                    onTogglePin={togglePin}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+              <SortableContext
+                items={notes.map((n) => n.id)}
+                strategy={rectSortingStrategy}
+              >
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {notes.map((note) => (
+                    <SortableNoteCard
+                      key={note.id}
+                      note={note}
+                      onEdit={openEdit}
+                      onDelete={setNoteToDelete}
+                      onTogglePin={togglePin}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )
         )}
       </main>
 

@@ -8,8 +8,8 @@ interface NoteListItemProps {
   onPress: () => void;
   onDelete: () => void;
   onTogglePin: () => void;
-  /** Begin a drag (from DraggableFlatList's `drag`). */
-  onDrag: () => void;
+  /** Begin a drag (from DraggableFlatList's `drag`). Omitted disables drag. */
+  onDrag?: () => void;
   isActive: boolean;
 }
 

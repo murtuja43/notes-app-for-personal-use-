@@ -13,6 +13,8 @@ interface NoteCardProps {
   onTogglePin: (note: Note) => void;
   /** Props spread onto the drag handle (from dnd-kit useSortable listeners). */
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
+  /** Hide the drag handle (e.g. while searching, when reordering is disabled). */
+  showDragHandle?: boolean;
 }
 
 function formatDate(value: string): string {
@@ -29,6 +31,7 @@ export function NoteCard({
   onDelete,
   onTogglePin,
   dragHandleProps,
+  showDragHandle = true,
 }: NoteCardProps) {
   return (
     <Card className={cn("flex flex-col", note.isPinned && "border-primary/40")}>
@@ -40,14 +43,16 @@ export function NoteCard({
             )}
             {note.title}
           </CardTitle>
-          <button
-            type="button"
-            aria-label="Drag to reorder"
-            className="-mr-1 mt-0.5 cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
-            {...dragHandleProps}
-          >
-            <GripVertical className="h-5 w-5" />
-          </button>
+          {showDragHandle && (
+            <button
+              type="button"
+              aria-label="Drag to reorder"
+              className="-mr-1 mt-0.5 cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
+              {...dragHandleProps}
+            >
+              <GripVertical className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col">

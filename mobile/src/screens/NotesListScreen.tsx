@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -6,6 +6,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -38,6 +39,20 @@ export function NotesListScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+
+  // Case-insensitive search over title + content. `notes` stays in its sorted
+  // order (pinned first, then manual order), so filtering preserves that order.
+  const trimmedQuery = query.trim().toLowerCase();
+  const isSearching = trimmedQuery.length > 0;
+  const visibleNotes = useMemo(() => {
+    if (!isSearching) return notes;
+    return notes.filter(
+      (n) =>
+        n.title.toLowerCase().includes(trimmedQuery) ||
+        n.content.toLowerCase().includes(trimmedQuery)
+    );
+  }, [notes, isSearching, trimmedQuery]);
 
   const load = useCallback(async (mode: "initial" | "refresh" = "initial") => {
     if (mode === "refresh") setRefreshing(true);
@@ -136,6 +151,9 @@ export function NotesListScreen({ navigation }: Props) {
   }
 
   async function handleDragEnd({ data }: { data: Note[] }) {
+    // Reordering is disabled while searching, so a filtered subset is never
+    // persisted as the full order.
+    if (isSearching) return;
     const previous = notes;
     setNotes(data); // keep the dragged order immediately (smooth)
     try {
@@ -156,14 +174,15 @@ export function NotesListScreen({ navigation }: Props) {
             onPress={() => navigation.navigate("EditNote", { note: item })}
             onDelete={() => confirmDelete(item)}
             onTogglePin={() => handleTogglePin(item)}
-            onDrag={drag}
+            // Disable drag-to-reorder while searching.
+            onDrag={isSearching ? undefined : drag}
             isActive={isActive}
           />
         </View>
       </ScaleDecorator>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [navigation, notes]
+    [navigation, notes, isSearching]
   );
 
   if (loading) {
@@ -191,11 +210,40 @@ export function NotesListScreen({ navigation }: Props) {
           </View>
         ) : null}
 
+        {notes.length > 0 ? (
+          <View style={styles.searchRow}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search notes by title or content..."
+              placeholderTextColor={colors.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="search"
+              clearButtonMode="while-editing"
+              accessibilityLabel="Search notes"
+            />
+            {isSearching ? (
+              <Pressable
+                hitSlop={8}
+                onPress={() => setQuery("")}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+              >
+                <Text style={styles.searchClear}>✕</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
+
         <DraggableFlatList
-          data={notes}
+          data={visibleNotes}
           onDragEnd={handleDragEnd}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -204,21 +252,28 @@ export function NotesListScreen({ navigation }: Props) {
           }
           renderItem={renderItem}
           ListHeaderComponent={
-            notes.length > 0 ? (
+            notes.length > 0 && !isSearching ? (
               <Text style={styles.hint}>
                 Long-press a note to drag and reorder.
               </Text>
             ) : null
           }
           ListEmptyComponent={
-            !error ? (
+            error ? null : isSearching ? (
+              <View style={styles.empty}>
+                <Text style={styles.emptyTitle}>No matching notes</Text>
+                <Text style={styles.emptyText}>
+                  No notes match “{query.trim()}”.
+                </Text>
+              </View>
+            ) : (
               <View style={styles.empty}>
                 <Text style={styles.emptyTitle}>No notes yet</Text>
                 <Text style={styles.emptyText}>
                   Tap “+ New” to create your first note.
                 </Text>
               </View>
-            ) : null
+            )
           }
         />
       </View>
@@ -271,6 +326,35 @@ const styles = StyleSheet.create({
     color: colors.muted,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
+  },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    paddingHorizontal: 12,
+    height: 44,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius,
+    backgroundColor: colors.inputBg,
+  },
+  searchIcon: {
+    fontSize: 15,
+    color: colors.muted,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
+    paddingVertical: 0,
+  },
+  searchClear: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.muted,
+    paddingHorizontal: 4,
   },
   hint: {
     fontSize: 12,
