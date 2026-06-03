@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
 import { signApiToken } from "@/lib/token";
+import { handleApiError } from "@/lib/api-error";
 
 /**
  * POST /api/auth/login
@@ -28,27 +29,32 @@ export async function POST(request: Request) {
   }
 
   const email = parsed.data.email.toLowerCase();
-  const user = await prisma.user.findUnique({ where: { email } });
 
-  // Same generic message whether the email or password is wrong.
-  const invalid = NextResponse.json(
-    { error: "Invalid email or password" },
-    { status: 401 }
-  );
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
 
-  if (!user) {
-    return invalid;
+    // Same generic message whether the email or password is wrong.
+    const invalid = NextResponse.json(
+      { error: "Invalid email or password" },
+      { status: 401 }
+    );
+
+    if (!user) {
+      return invalid;
+    }
+
+    const isValid = await bcrypt.compare(parsed.data.password, user.password);
+    if (!isValid) {
+      return invalid;
+    }
+
+    const token = signApiToken(user.id);
+
+    return NextResponse.json({
+      token,
+      user: { id: user.id, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    return handleApiError("login", error);
   }
-
-  const isValid = await bcrypt.compare(parsed.data.password, user.password);
-  if (!isValid) {
-    return invalid;
-  }
-
-  const token = signApiToken(user.id);
-
-  return NextResponse.json({
-    token,
-    user: { id: user.id, name: user.name, email: user.email },
-  });
 }
